@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: controller.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: controller.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>const database = require('../database.js');
+const data = require('../files/data.json');
+
+exports.test = async function(ctx) {
+    var circles = data.nodes;
+    await database.db.collection('nodes').deleteMany({});
+    await database.db.collection('edges').deleteMany({});
+    circles.forEach((elem, i) => {
+        elem.forEach(async (elt, index) => {
+            elt.circle = i + 1;
+            elt.pos = index;
+            await database.db.collection('nodes').insertOne(elt);
+        });
+    });
+
+    var edges = data.edges;
+    edges.forEach(async (elem, i) => {
+        elem.id = i+1;
+        await database.db.collection('edges').insertOne(elem);
+    });
+    return database.db.collection('nodes').find({}).toArray();
+}
+
+/**
+ * Fetch nodes from Frontend
+ * @return {Array} Returns an array of nodes objects
+ */
+exports.getNodes = function(ctx) {
+    return database.db.collection('nodes').find({}).sort({ circle: 1, pos: 1 }).toArray();
+}
+
+/**
+ * Fetch edges from Frontend
+ * @return {Array} Returns an array of edges objects
+ */
+exports.getEdges = function(ctx) {
+    return database.db.collection('edges').find({}).toArray();
+}
+
+
+exports.getNodebyId = async function(ctx) {
+    var { id } = ctx.params.query
+    return database.db.collection('nodes').findOne({"id": parseInt(id)});
+}
+
+exports.updateNode = async function(ctx) {
+    var body = ctx.requestBody;
+    var old = await database.db.collection('nodes').findOne({"id": parseInt(body.id)});
+    delete body['_id'];
+
+    if (old.circle != body.circle) {
+        var maxPosNew = await database.db.collection('nodes').find({ circle: body.circle }).sort({ pos: -1 }).limit(1).toArray();
+        var posNew = maxPosNew.length > 0 ? maxPosNew[0].pos + 1 : 0
+        body.pos = posNew;
+
+        var maxPosOld = await database.db.collection('nodes').find({ circle: old.circle }).sort({ pos: -1 }).limit(1).toArray();
+        for (var i = old.pos + 1; i &lt;= maxPosOld[0].pos; i++) {
+            var reduceVal = await database.db.collection('nodes').findOne({ circle: old.circle, pos: i });
+            reduceVal.pos = reduceVal.pos - 1;
+            await database.db.collection('nodes').updateOne({"id": parseInt(reduceVal.id)}, {$set: reduceVal});
+        }
+    }
+
+    await database.db.collection('nodes').updateOne({"id": parseInt(body.id)}, {$set: body});
+    return database.db.collection('nodes').findOne({"id": parseInt(body.id)});
+}
+
+exports.changePlace = async function(ctx) {
+    var body = ctx.requestBody;
+    var node = await database.db.collection('nodes').findOne({ id: body.id });
+    var max = await database.db.collection('nodes').find({ circle: node.circle }).sort({ pos: -1 }).limit(1).toArray();
+    if(body.horaire) {
+        if (max[0].pos == node.pos) {
+            await database.db.collection('nodes').updateOne({"circle": node.circle, "pos": 0}, {$set: { pos: node.pos }});
+            await database.db.collection('nodes').updateOne({"id": node.id}, {$set: { pos: 0 }});
+        } else {
+            var second = await database.db.collection('nodes').findOne({ circle: node.circle, pos: node.pos + 1 });
+            await database.db.collection('nodes').updateOne({"id": node.id}, {$set: { pos: node.pos + 1 }});
+            await database.db.collection('nodes').updateOne({"id": second.id}, {$set: { pos: node.pos }});
+        }
+    } else {
+        if (0 == node.pos) {
+            await database.db.collection('nodes').updateOne({"id": node.id}, {$set: { pos: max[0].pos }});
+            await database.db.collection('nodes').updateOne({"id": max[0].id}, {$set: { pos: 0 }});
+        } else {
+            var second = await database.db.collection('nodes').findOne({ circle: node.circle, pos: node.pos - 1 });
+            await database.db.collection('nodes').updateOne({"id": node.id}, {$set: { pos: node.pos - 1 }});
+            await database.db.collection('nodes').updateOne({"id": second.id}, {$set: { pos: node.pos }});
+        }
+    }
+}</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Global</h3><ul><li><a href="global.html#getEdges">getEdges</a></li><li><a href="global.html#getNodes">getNodes</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.6</a> on Mon Sep 28 2020 11:34:17 GMT+0200 (Central European Summer Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>
