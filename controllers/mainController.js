@@ -73,18 +73,28 @@ exports.isAutorise = async (req, res) => {
     var {autoId} = req.query;
 
     var query = `select * from autorisation where autorisant=${userId} and autorise=${autoId}`;
+    var res1 = await makeDbQuery(query);
 
-    var res = await makeDbQuery(query);
+    var query2 = `select * from autorisation where autorisant=${autoId} and autorise=${userId}`;
+    var res2 = await makeDbQuery(query2);
 
-    if(!res[0]) {
-        return res.json({
-            success: true,
-            data: false
-        });
+    var visitable = true;
+    var autorise = false;
+
+
+    if(!res1[0]) {
+        autorise = true;
     }
+
+    if(!res2[0]) {
+        visitable = false;
+    }
+
     return res.json({
         success: true,
-        data: true
+        data: {
+            autorise, visitable
+        }
     });
 }
 
