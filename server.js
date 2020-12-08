@@ -2,6 +2,7 @@ const express = require('express');
 const path = require('path');
 const cors = require('cors');
 const http = require('http');
+const https = require('https');
 const fs = require('fs');
 const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
@@ -11,7 +12,7 @@ var authRouter = require('./routes/auth');
 
 
 async function createServer () {
-    await database.connect();
+    await database.connect().connect();
 
     // See https://github.com/exegesis-js/exegesis/blob/master/docs/Options.md
 
@@ -44,6 +45,13 @@ async function createServer () {
     });
 
     const server = http.createServer(app);
+
+    // var credentials = {
+    //   key: fs.readFileSync('key/privkey.pem'),
+    //   cert: fs.readFileSync('key/fullchain.pem')
+    // }
+
+    // const server = https.createServer(credentials, app);
 
     return server;
 }

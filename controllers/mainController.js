@@ -51,10 +51,54 @@ exports.getProfiles = async (req, res) => {
     } 
     var userId = user[0].id;
 
-    var data = await makeDbQuery(`select id, username from login where id != ${userId} and username like "%${req.query.recherche}%"`);
+    var query = `select id, username, from login where id != ${userId} and username like "%${req.query.recherche}%" `;
+    query += `and id in ( select autorise from autorisation where autorisant == ${userId} )`;
+
+    var data = await makeDbQuery(query);
     res.json({
         success: true,
         data
+    })
+}
+
+exports.getProfilesAutorisation = async (req, res) => {
+    var user = await makeDbQuery(`select * from login where username='${req.username}'`)
+    if (!user[0]) {
+        return res.status(401)
+        .json({
+            error: 'incorrect login'
+        });
+    } 
+    var userId = user[0].id;
+
+    var query = `select id, username, from login where id != ${userId} and username like "%${req.query.recherche}%"`;
+
+    var data = await makeDbQuery(query);
+    res.json({
+        success: true,
+        data
+    })
+}
+
+
+
+exports.addAutorisation = async (req, res) => {
+    var user = await makeDbQuery(`select * from login where username='${req.username}'`)
+    if (!user[0]) {
+        return res.status(401)
+        .json({
+            error: 'incorrect login'
+        });
+    } 
+    var userId = user[0].id;
+
+    var {autoriseId} = req.body;
+    var query = `insert into autorisation values (${userId}, ${autoriseId})`;
+
+    await makeDbQuery(query);
+    
+    res.json({
+        success: true
     })
 }
 
