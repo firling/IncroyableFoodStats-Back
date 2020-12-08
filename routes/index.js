@@ -9,8 +9,7 @@ router.get('/getUserHistoric', userAuth, controller.getUserHistoric);
 router.get('/getProfiles', userAuth, controller.getProfiles);
 router.get('/getSpecificUserHistoric', userAuth, controller.getSpecificUserHistoric);
 
-
-router.get('/getProfilesAutorisation', userAuth, controller.getProfilesAutorisation);
+router.get('/isAutorise', userAuth, controller.isAutorise)
 router.post('/addAutorisation', userAuth, controller.addAutorisation);
 
 module.exports = router;

@@ -51,8 +51,7 @@ exports.getProfiles = async (req, res) => {
     } 
     var userId = user[0].id;
 
-    var query = `select id, username, from login where id != ${userId} and username like "%${req.query.recherche}%" `;
-    query += `and id in ( select autorise from autorisation where autorisant == ${userId} )`;
+    var query = `select id, username from login where id != ${userId} and username like "%${req.query.recherche}%"`;
 
     var data = await makeDbQuery(query);
     res.json({
@@ -61,7 +60,7 @@ exports.getProfiles = async (req, res) => {
     })
 }
 
-exports.getProfilesAutorisation = async (req, res) => {
+exports.isAutorise = async (req, res) => {
     var user = await makeDbQuery(`select * from login where username='${req.username}'`)
     if (!user[0]) {
         return res.status(401)
@@ -71,16 +70,23 @@ exports.getProfilesAutorisation = async (req, res) => {
     } 
     var userId = user[0].id;
 
-    var query = `select id, username, from login where id != ${userId} and username like "%${req.query.recherche}%"`;
+    var {autoId} = req.query;
 
-    var data = await makeDbQuery(query);
-    res.json({
+    var query = `select * from autorisation where autorisant=${userId} and autorise=${autoId}`;
+
+    var res = await makeDbQuery(query);
+
+    if(!res[0]) {
+        return res.json({
+            success: true,
+            data: false
+        });
+    }
+    return res.json({
         success: true,
-        data
-    })
+        data: true
+    });
 }
-
-
 
 exports.addAutorisation = async (req, res) => {
     var user = await makeDbQuery(`select * from login where username='${req.username}'`)
@@ -98,7 +104,8 @@ exports.addAutorisation = async (req, res) => {
     await makeDbQuery(query);
     
     res.json({
-        success: true
+        success: true,
+        data: true
     })
 }
 
