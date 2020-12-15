@@ -12,4 +12,6 @@ router.get('/getSpecificUserHistoric', userAuth, controller.getSpecificUserHisto
 router.get('/isAutorise', userAuth, controller.isAutorise)
 router.post('/addAutorisation', userAuth, controller.addAutorisation);
 
+router.get('/getDetail', userAuth, controller.getDetail);
+
 module.exports = router;
