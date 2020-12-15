@@ -21,10 +21,10 @@ exports.storeHistoric = async (req, res) => {
             success: true
         })
 
-        var aliment_id = await makeDbQuery(`select LAST_INSERT_ID()`);
+        var aliment_id = await makeDbQuery(`select LAST_INSERT_ID() id`);
 
         var query = `insert into detailsAliment (aliment_id, ingredients_text_fr, nutrient_sugars, nutrient_fat, nutrient_saturated_fat, nutrient_salt, nutrition_grade_fr, nutrition_score_fr, energy_kcal, energy_kcal_100g, quantity) `;
-        query =+ `values (${aliment_id[0]}, ${ingredients_text_fr}, ${nutrient_sugars}, ${nutrient_fat}, ${nutrient_saturated_fat}, ${nutrient_salt}, ${nutrition_grade_fr}, ${nutrition_score_fr}, ${energy_kcal}, ${energy_kcal_100g}, ${quantity})`;
+        query += `values (${aliment_id[0].id}, "${ingredients_text_fr}", "${nutrient_sugars}", "${nutrient_fat}", "${nutrient_saturated_fat}", "${nutrient_salt}", "${nutrition_grade_fr}", ${nutrition_score_fr}, ${energy_kcal}, ${energy_kcal_100g}, "${quantity}")`;
 
         await makeDbQuery(query);
     } catch(e) {
