@@ -2,7 +2,6 @@ const makeDbQuery = require("../makeDbQuery.js");
 
 exports.storeHistoric = async (req, res) => {
     var user = await makeDbQuery(`select * from login where username='${req.username}'`)
-    const { aliment, idAliment, urlAliment } = req.body;
     if (!user[0]) {
         return res.status(401)
         .json({
@@ -11,11 +10,23 @@ exports.storeHistoric = async (req, res) => {
     } 
     var userId = user[0].id;
 
+    const { aliment, idAliment, urlAliment } = req.body; //historic
+
+    const { ingredients_text_fr, nutrient_sugars, nutrient_fat, nutrient_saturated_fat, 
+            nutrient_salt, nutrition_grade_fr, nutrition_score_fr, energy_kcal, energy_kcal_100g, quantity} = req.body; //detail
+
     try {
         await makeDbQuery(`insert into historique (userId, aliment, idAliment, urlAliment) values (${userId}, "${aliment}", '${idAliment}', "${urlAliment}")`);
         res.json({
             success: true
         })
+
+        var aliment_id = await makeDbQuery(`select LAST_INSERT_ID()`);
+
+        var query = `insert into detailsAliment (aliment_id, ingredients_text_fr, nutrient_sugars, nutrient_fat, nutrient_saturated_fat, nutrient_salt, nutrition_grade_fr, nutrition_score_fr, energy_kcal, energy_kcal_100g, quantity) `;
+        query =+ `values (${aliment_id[0]}, ${ingredients_text_fr}, ${nutrient_sugars}, ${nutrient_fat}, ${nutrient_saturated_fat}, ${nutrient_salt}, ${nutrition_grade_fr}, ${nutrition_score_fr}, ${energy_kcal}, ${energy_kcal_100g}, ${quantity})`;
+
+        await makeDbQuery(query);
     } catch(e) {
         console.log(e);
         res.json({
@@ -126,5 +137,25 @@ exports.getSpecificUserHistoric = async (req, res ) => {
     res.json({
         success: true,
         data
+    })
+}
+
+exports.getDetail = async (req, res) => {
+    var user = await makeDbQuery(`select * from login where username='${req.username}'`)
+    if (!user[0]) {
+        return res.status(401)
+        .json({
+            error: 'incorrect login'
+        });
+    } 
+
+    var {aliment_id} = req.query;
+
+    var query = `select * from detailsAliment where aliment_id=${aliment_id}`;
+
+    var result = await makeDbQuery(query);
+    res.json({
+        success: true,
+        data: result[0]
     })
 }
